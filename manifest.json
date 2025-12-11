@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "kickstarer-tool-roly",
+  "version": "1.0",
+  "description": "Extract page text and download as txt file",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "permissions": ["activeTab", "downloads"],
+  "host_permissions": ["https://rolyyung.top/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  }
+}

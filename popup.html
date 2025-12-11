@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>提取文字</title>
+  <style>
+    body {
+      width: 250px;
+      height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #ffffff;
+      position: relative;
+    }
+
+    .extract-btn {
+      width: auto;
+      min-width: 120px;
+      height: 40px;
+      background-color: #1890ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 16px;
+    }
+
+    .extract-btn:hover {
+      background-color: #40a9ff;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+    }
+
+    .extract-btn:active {
+      background-color: #096dd9;
+      box-shadow: 0 1px 4px rgba(24, 144, 255, 0.4);
+    }
+
+    /* 自定义提示弹窗样式 */
+    .custom-alert {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 180px;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .custom-alert.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+  <button class="extract-btn" id="extract-address-btn">提取地址</button>
+  <button class="extract-btn" id="extract-text-btn">提取文字</button>
+  <button class="extract-btn" id="download-images-btn">下载图片</button>
+
+  <!-- 自定义提示弹窗 -->
+  <div class="custom-alert" id="custom-alert"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
