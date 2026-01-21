@@ -15,9 +15,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // 下载为txt文件
     if (pageText.length > 0) {
-      downloadTextAsFile(pageText);
+      downloadTextAsFile(pageText, () => {
+        // 下载完成后发送成功响应
+        sendResponse({ success: true, message: '文字提取成功，文件已下载' });
+      });
     } else {
       console.error('未提取到文字内容');
+      sendResponse({ success: false, message: '提取文字失败,请刷新重新 或 联系管理员' });
     }
 
     return true; // 保持消息通道开放，直到处理完成
@@ -94,7 +98,7 @@ function extractPageText() {
 }
 
 // 下载文本为txt文件的函数
-function downloadTextAsFile(text) {
+function downloadTextAsFile(text, callback) {
   const filename = `page-text-${Date.now()}.txt`;
 
   // 创建Blob对象
@@ -113,7 +117,11 @@ function downloadTextAsFile(text) {
 
   // 清理资源
   document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    // 调用回调函数表示下载完成
+    if (callback) callback();
+  }, 100);
 }
 
 // 下载文件（支持单个图片或压缩包，使用Chrome下载API）

@@ -17,7 +17,7 @@
     "128": "icon.png"
   },
   "permissions": ["activeTab", "downloads"],
-  "host_permissions": ["https://rolyyung.top/*"],
+  "host_permissions": ["https://rolyyung.top/*", "https://api.frankfurter.app/*", "https://api.exchangerate.host/*"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

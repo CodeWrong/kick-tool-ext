@@ -146,3 +146,207 @@ downloadImagesBtn.addEventListener('click', () => {
     });
   });
 });
+
+// ==================== 汇率转换功能（紧凑扁平设计）====================
+
+// DOM 元素
+const currencyAmountInput = document.getElementById('currency-amount');
+const currencyResult = document.getElementById('currency-result');
+const exchangeRateText = document.getElementById('exchange-rate');
+const lastUpdateText = document.getElementById('last-update');
+const swapBtn = document.getElementById('swap-btn');
+const sourceFlag = document.getElementById('source-flag');
+const sourceCode = document.getElementById('source-code');
+const targetFlag = document.getElementById('target-flag');
+const targetCode = document.getElementById('target-code');
+const sourceSide = document.getElementById('source-side');
+
+// 币种配置
+const currencies = {
+  USD: { flag: '🇺🇸', name: '美元' },
+  CNY: { flag: '🇨🇳', name: '人民币' }
+};
+
+// 当前币种状态
+let currencyState = {
+  from: 'USD',
+  to: 'CNY'
+};
+
+// 汇率缓存
+let exchangeRateCache = {
+  usdToCny: null,
+  cnyToUsd: null,
+  timestamp: null,
+  expiry: 10 * 60 * 1000 // 10分钟缓存
+};
+
+// 防抖计时器
+let debounceTimer = null;
+
+// 格式化时间差
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return '';
+  const now = Date.now();
+  const diff = Math.floor((now - timestamp) / 1000); // 秒
+
+  if (diff < 60) return '';
+  if (diff < 3600) return `· ${Math.floor(diff / 60)}分钟前`;
+  return `· ${Math.floor(diff / 3600)}小时前`;
+}
+
+// 更新币种显示
+function updateCurrencyDisplay() {
+  sourceFlag.textContent = currencies[currencyState.from].flag;
+  sourceCode.textContent = currencyState.from;
+  targetFlag.textContent = currencies[currencyState.to].flag;
+  targetCode.textContent = currencyState.to;
+}
+
+// 互换币种
+function swapCurrencies() {
+  const temp = currencyState.from;
+  currencyState.from = currencyState.to;
+  currencyState.to = temp;
+
+  updateCurrencyDisplay();
+
+  // 清空输入和输出
+  currencyAmountInput.value = '';
+  currencyResult.value = '';
+}
+
+// 获取汇率
+async function fetchExchangeRate(from, to) {
+  const cacheKey = `${from.toLowerCase()}To${to.charAt(0).toUpperCase() + to.slice(1).toLowerCase()}`;
+
+  // 检查缓存
+  if (exchangeRateCache[cacheKey] && exchangeRateCache.timestamp) {
+    const now = Date.now();
+    if (now - exchangeRateCache.timestamp < exchangeRateCache.expiry) {
+      console.log(`使用缓存汇率 (${from}/${to}):`, exchangeRateCache[cacheKey]);
+      return exchangeRateCache[cacheKey];
+    }
+  }
+
+  try {
+    // 显示加载状态
+    exchangeRateText.innerHTML = '<span class="loading-spinner"></span>获取汇率中...';
+
+    // 调用Frankfurter API
+    const response = await fetch(`https://api.frankfurter.app/latest?from=${from}&to=${to}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP错误! 状态码: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.rates || !data.rates[to]) {
+      throw new Error('API返回的数据格式不正确');
+    }
+
+    const rate = data.rates[to];
+
+    // 更新缓存
+    exchangeRateCache[cacheKey] = rate;
+    exchangeRateCache.timestamp = Date.now();
+
+    // 同时缓存反向汇率
+    const reverseCacheKey = `${to.toLowerCase()}To${from.charAt(0).toUpperCase() + from.slice(1).toLowerCase()}`;
+    exchangeRateCache[reverseCacheKey] = 1 / rate;
+
+    console.log(`获取到实时汇率 (${from}/${to}):`, rate);
+
+    // 更新汇率显示
+    exchangeRateText.textContent = `1 ${from} = ${rate.toFixed(4)} ${to}${formatTimeAgo(exchangeRateCache.timestamp)}`;
+
+    return rate;
+
+  } catch (error) {
+    console.error('获取汇率失败:', error);
+
+    // 如果API失败，尝试使用缓存
+    if (exchangeRateCache[cacheKey]) {
+      console.log(`API失败，使用缓存汇率 (${from}/${to}):`, exchangeRateCache[cacheKey]);
+      exchangeRateText.textContent = `1 ${from} = ${exchangeRateCache[cacheKey].toFixed(4)} ${to}·缓存`;
+      return exchangeRateCache[cacheKey];
+    }
+
+    // 如果没有缓存，使用默认汇率
+    const defaultRate = from === 'USD' ? 7.2 : 0.1389;
+    console.log(`API失败且无缓存，使用默认汇率 (${from}/${to}):`, defaultRate);
+    exchangeRateText.textContent = `1 ${from} = ${defaultRate.toFixed(4)} ${to}·默认`;
+    return defaultRate;
+  }
+}
+
+// 执行转换
+async function performConversion() {
+  const amount = parseFloat(currencyAmountInput.value);
+
+  // 清除之前的加载状态
+  if (exchangeRateText.querySelector('.loading-spinner')) {
+    // 正在加载中，不重复请求
+    return;
+  }
+
+  // 验证输入
+  if (isNaN(amount) || amount <= 0) {
+    currencyResult.value = '';
+    return;
+  }
+
+  try {
+    // 获取汇率
+    const exchangeRate = await fetchExchangeRate(currencyState.from, currencyState.to);
+
+    if (!exchangeRate) {
+      throw new Error('无法获取汇率');
+    }
+
+    // 计算结果
+    const result = (amount * exchangeRate).toFixed(2);
+
+    // 显示结果
+    currencyResult.value = result;
+
+  } catch (error) {
+    console.error('转换失败:', error);
+    currencyResult.value = '失败';
+  }
+}
+
+// 输入框防抖处理
+currencyAmountInput.addEventListener('input', () => {
+  // 清除之前的计时器
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+
+  // 设置新的计时器（300ms防抖）
+  debounceTimer = setTimeout(() => {
+    performConversion();
+  }, 300);
+});
+
+// 输入框聚焦效果
+currencyAmountInput.addEventListener('focus', () => {
+  sourceSide.classList.add('input-focused');
+});
+
+currencyAmountInput.addEventListener('blur', () => {
+  sourceSide.classList.remove('input-focused');
+});
+
+// 互换按钮事件
+swapBtn.addEventListener('click', swapCurrencies);
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', () => {
+  // 更新币种显示
+  updateCurrencyDisplay();
+
+  // 预加载汇率
+  fetchExchangeRate('USD', 'CNY');
+});

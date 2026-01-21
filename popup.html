@@ -5,32 +5,30 @@
   <title>提取文字</title>
   <style>
     body {
-      width: 250px;
-      height: 140px;
+      width: 260px;
+      min-height: 300px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
       gap: 12px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       margin: 0;
       padding: 16px;
       background-color: #ffffff;
-      position: relative;
     }
 
     .extract-btn {
       width: auto;
       min-width: 120px;
       height: 40px;
-      background-color: #1890ff;
+      background-color: #2D7CF1;
       color: white;
       border: none;
       border-radius: 4px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+      transition: all 0.2s;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -38,13 +36,11 @@
     }
 
     .extract-btn:hover {
-      background-color: #40a9ff;
-      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+      background-color: #1a5ab8;
     }
 
     .extract-btn:active {
-      background-color: #096dd9;
-      box-shadow: 0 1px 4px rgba(24, 144, 255, 0.4);
+      background-color: #0f3d7a;
     }
 
     /* 自定义提示弹窗样式 */
@@ -73,12 +69,195 @@
       opacity: 1;
       visibility: visible;
     }
+
+    /* 汇率转换样式 - 紧凑扁平设计 */
+    .currency-converter {
+      width: 100%;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+
+    .currency-card {
+      background-color: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    /* 一体化输入框区域 */
+    .currency-inputs-row {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .currency-side {
+      flex: 1;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px 10px;
+      transition: all 0.2s;
+    }
+
+    .currency-side.input-focused {
+      border-color: #2D7CF1;
+    }
+
+    .currency-side-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .currency-flag {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .currency-code {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+
+    .currency-input {
+      width: 100%;
+      height: 28px;
+      padding: 0 2px;
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .currency-input::-webkit-inner-spin-button,
+    .currency-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .currency-input::placeholder {
+      color: #ccc;
+      font-weight: 400;
+      font-size: 16px;
+    }
+
+    /* 输出结果只读 */
+    .currency-result {
+      color: #333;
+    }
+
+    /* 中间互换按钮 */
+    .swap-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .swap-btn:hover {
+      border-color: #2D7CF1;
+      color: #2D7CF1;
+    }
+
+    .swap-icon {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .swap-btn:hover .swap-icon {
+      color: #2D7CF1;
+    }
+
+    /* 底部汇率信息 */
+    .currency-footer {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .exchange-rate {
+      font-size: 10px;
+      color: #aaa;
+    }
+
+    .last-update {
+      font-size: 10px;
+      color: #bbb;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border: 1.5px solid #eee;
+      border-top-color: #2D7CF1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 4px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <button class="extract-btn" id="extract-address-btn">提取地址</button>
   <button class="extract-btn" id="extract-text-btn">提取文字</button>
   <button class="extract-btn" id="download-images-btn">下载图片</button>
+
+  <!-- 汇率转换 -->
+  <div class="currency-converter">
+    <div class="currency-card">
+      <div class="currency-inputs-row">
+        <!-- 左侧：USD输入 -->
+        <div class="currency-side" id="source-side">
+          <div class="currency-side-header">
+            <span class="currency-flag" id="source-flag">🇺🇸</span>
+            <span class="currency-code" id="source-code">USD</span>
+          </div>
+          <input type="number" class="currency-input" id="currency-amount" placeholder="0" step="0.01" min="0">
+        </div>
+
+        <!-- 中间：互换按钮 -->
+        <button class="swap-btn" id="swap-btn" title="互换币种">
+          <span class="swap-icon">⇄</span>
+        </button>
+
+        <!-- 右侧：CNY输出 -->
+        <div class="currency" id="target-side">
+          <div class="currency-side-header">
+            <span class="currency-flag" id="target-flag">🇨🇳</span>
+            <span class="currency-code" id="target-code">CNY</span>
+          </div>
+          <input type="text" class="currency-input currency-result" id="currency-result" placeholder="0.00" readonly>
+        </div>
+      </div>
+
+      <!-- 底部信息 -->
+      <div class="currency-footer">
+        <span class="exchange-rate" id="exchange-rate">汇率加载中...</span>
+        <span class="last-update" id="last-update"></span>
+      </div>
+    </div>
+  </div>
 
   <!-- 自定义提示弹窗 -->
   <div class="custom-alert" id="custom-alert"></div>
