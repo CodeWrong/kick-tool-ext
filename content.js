@@ -97,9 +97,34 @@ function extractPageText() {
   return text;
 }
 
+// 生成北京时间（UTC+8）的日期字符串，格式为 MM-DD
+function getBeijingDate() {
+  const now = new Date();
+  // 转换为北京时间（UTC+8 = 8小时偏移）
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const beijingTime = new Date(utc + (3600000 * 8));
+
+  const month = String(beijingTime.getMonth() + 1).padStart(2, '0');
+  const day = String(beijingTime.getDate()).padStart(2, '0');
+
+  return `${month}-${day}`;
+}
+
+// 生成8位随机hash值
+function generateRandomHash(length = 8) {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 // 下载文本为txt文件的函数
 function downloadTextAsFile(text, callback) {
-  const filename = `page-text-${Date.now()}.txt`;
+  const beijingDate = getBeijingDate();
+  const randomHash = generateRandomHash(8);
+  const filename = `${beijingDate}-${randomHash}-ks-ext.txt`;
 
   // 创建Blob对象
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
